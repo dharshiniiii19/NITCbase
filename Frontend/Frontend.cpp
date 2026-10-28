@@ -37,13 +37,13 @@ int Frontend::alter_table_rename_column(char relname[ATTR_SIZE], char attrname_f
 int Frontend::create_index(char relname[ATTR_SIZE], char attrname[ATTR_SIZE])
 {
 	Schema::createIndex(relname, attrname);
-	
+	return SUCCESS;
 }
 
 int Frontend::drop_index(char relname[ATTR_SIZE], char attrname[ATTR_SIZE])
 {
 	Schema::dropIndex(relname, attrname);
-	
+	return SUCCESS;
 }
 
 int Frontend::insert_into_table_values(char relname[ATTR_SIZE], int attr_count, char attr_values[][ATTR_SIZE])
@@ -92,21 +92,46 @@ int Frontend::select_attrlist_from_table_where(char relname_source[ATTR_SIZE], c
 	return SUCCESS;
 }
 
-int Frontend::select_from_join_where(char relname_source_one[ATTR_SIZE], char relname_source_two[ATTR_SIZE],
-									 char relname_target[ATTR_SIZE],
-									 char join_attr_one[ATTR_SIZE], char join_attr_two[ATTR_SIZE])
+// int Frontend::select_from_join_where(char relname_source_one[ATTR_SIZE], char relname_source_two[ATTR_SIZE],
+// 									 char relname_target[ATTR_SIZE],
+// 									 char join_attr_one[ATTR_SIZE], char join_attr_two[ATTR_SIZE])
+// {
+// 	// Algebra::join
+// 	return SUCCESS;
+// }
+
+int Frontend::select_from_join_where(char relname_source_one[ATTR_SIZE], 
+										char relname_source_two[ATTR_SIZE], 
+										char relname_target[ATTR_SIZE], 
+										char join_attr_one[ATTR_SIZE], 
+										char join_attr_two[ATTR_SIZE]) 
 {
-	// Algebra::join
-	return SUCCESS;
+    // Call join() method of the Algebra Layer with correct arguments
+	return Algebra::join(relname_source_one, relname_source_two, 
+							relname_target, join_attr_one, join_attr_two);
+
+    // Return Success or Error values appropriately
+	// return ret;
 }
 
-int Frontend::select_attrlist_from_join_where(char relname_source_one[ATTR_SIZE], char relname_source_two[ATTR_SIZE],
-											  char relname_target[ATTR_SIZE],
-											  char join_attr_one[ATTR_SIZE], char join_attr_two[ATTR_SIZE],
-											  int attr_count, char attr_list[][ATTR_SIZE])
+
+int Frontend::select_attrlist_from_join_where(char relname_source_one[ATTR_SIZE], 
+												char relname_source_two[ATTR_SIZE],
+											  	char relname_target[ATTR_SIZE],
+											  	char join_attr_one[ATTR_SIZE], 
+												char join_attr_two[ATTR_SIZE],
+											  	int attr_count, char attr_list[][ATTR_SIZE])
 {
 	// Algebra::join + project
-	return SUCCESS;
+	int ret = Algebra::join(relname_source_one, relname_source_two, 
+							"temp_relation", join_attr_one, join_attr_two);
+	if (ret != SUCCESS) return ret;
+
+	ret = Algebra::project("temp_relation", relname_target, attr_count, attr_list);
+	OpenRelTable::closeRel(OpenRelTable::getRelId("temp_relation"));
+	Schema::deleteRel("temp_relation");
+
+	return ret;
 }
 
 int Frontend::custom_function(int argc, char argv[][ATTR_SIZE])
